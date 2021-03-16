@@ -24,13 +24,11 @@ public class Player : DamageableEntity {
 
     [Header("Shooting")]
     public GameObject throwablePrefab;
-    public float playerMovementInfluenceOnThrowing = 1f;
-    public float throwForce = 14f;
-    private Vector3 mouseWhenStartHolding;
+    public Transform throwableSpawnLocation;
+    public float throwForceHi;
+    public float throwForceLo;
     private bool aiming;
     public float aimingSens;
-    //should be private, only public for debug reasons
-    public float throwPower;
     private GameObject thrownObject;
 
     protected override void Start() {
@@ -61,21 +59,16 @@ public class Player : DamageableEntity {
 
         //SHOOTING
         if ( Input.GetMouseButtonDown(0) ) {
-            //start tracking force
-            mouseWhenStartHolding = Input.mousePosition;
-            aiming = true;
-            throwPower = 0.5f;
-
-            thrownObject = Instantiate(throwablePrefab, playerHolder.transform.position, playerHolder.transform.rotation) as GameObject;
-        }
-        if ( Input.GetMouseButton(0) ) {
-            Vector3 mouseCurrent = Input.mousePosition;
-            throwPower = (Mathf.Clamp( (mouseWhenStartHolding - mouseCurrent).sqrMagnitude, -aimingSens, aimingSens) + aimingSens) / 2 * aimingSens ;
-        }
-        if ( Input.GetMouseButtonUp(0) ) {
+            thrownObject = Instantiate(throwablePrefab, throwableSpawnLocation.position, playerHolder.transform.rotation) as GameObject;
             Throwable thrown = thrownObject.GetComponent<Throwable>();
-            Vector3 throwDir = playerToCrosshair.normalized * 3f + playerMovement * playerMovementInfluenceOnThrowing;
-            thrown.Throw(throwDir, throwForce * throwPower);
+            thrown.Throw(playerToCrosshair, throwForceHi);
+            thrown.Ignite();
+        }
+        if ( Input.GetMouseButtonDown(1) ) {
+            thrownObject = Instantiate(throwablePrefab, throwableSpawnLocation.position, playerHolder.transform.rotation) as GameObject;
+            Throwable thrown = thrownObject.GetComponent<Throwable>();
+            thrown.Throw(playerToCrosshair, throwForceLo);
+            thrown.Ignite();
         }
 
 

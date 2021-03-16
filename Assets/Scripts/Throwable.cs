@@ -9,12 +9,13 @@ public class Throwable : MonoBehaviour {
     private float airtime;
     public bool thrown;
     private Rigidbody2D rb;
+    private float rbInitVel;
     
     [Header("Properties")]
     public float lifetime;
     public float airDrag;
     public float groundDrag;
-    public bool canSelfDetonate;
+    public bool zeroHealthCausesExpiration;
     public float health;
     public bool lit;
 
@@ -26,6 +27,7 @@ public class Throwable : MonoBehaviour {
 
         t = airtime = 0;
         thrown = false;
+        lit = false;
     
         rb.drag = airDrag;
     }
@@ -33,17 +35,21 @@ public class Throwable : MonoBehaviour {
     protected virtual void Update() {
         if ( lit )
             t += Time.deltaTime;
-        if ( thrown )
-            airtime -= Time.deltaTime;
 
-        if ( thrown && airtime <= 0 ) {
+        if ( thrown && rb.velocity.sqrMagnitude < rbInitVel / 3f && rb.drag < groundDrag ) {
             rb.drag = groundDrag;
         } 
 
-        if ( t >= lifetime || health <= 0 ) {
+        if ( t >= lifetime || health <= 0 && zeroHealthCausesExpiration ) {
             Expire();
         }
 
+    }
+
+    private void OnCollisionEnter2D(Collision2D other) {
+        if ( OnBounce != null ) {
+            OnBounce();
+        }
     }
 
     public virtual void Ignite() {
@@ -58,9 +64,9 @@ public class Throwable : MonoBehaviour {
     }
 
     public virtual void Throw(Vector3 dir, float force) {
-        rb.AddForce(dir * force, ForceMode2D.Impulse);
+        rb.AddForce(dir.normalized * force, ForceMode2D.Impulse);
         thrown = true;
-        airtime = 0;
+        rbInitVel = rb.velocity.sqrMagnitude;
     }
 
 }
